@@ -9,9 +9,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.employeeservice.employee.Dto.APIResponseDto;
 import com.employeeservice.employee.Dto.DepartmentDto;
 import com.employeeservice.employee.Dto.EmployeeDto;
+import com.employeeservice.employee.Dto.OrganizationDto;
 import com.employeeservice.employee.entity.Employee;
 import com.employeeservice.employee.repository.EmployeeRepository;
 import com.employeeservice.employee.service.APIClient;
+import com.employeeservice.employee.service.ApiClientOrganization;
 import com.employeeservice.employee.service.EmployeeService;
 
 import lombok.AllArgsConstructor;
@@ -22,6 +24,7 @@ public class EmployeeServiceImp implements EmployeeService{
 	private EmployeeRepository employeeRepository;
 	private ModelMapper mapper;
 	private APIClient apiClient;
+	private ApiClientOrganization apiClientOrganization;
 	//private WebClient webClient;
 	//private RestTemplate restTemplate;
 
@@ -35,6 +38,7 @@ public class EmployeeServiceImp implements EmployeeService{
 	@Override
 	public APIResponseDto getEmployee(Long id){
 		Employee employee = employeeRepository.findById(id).get();
+		EmployeeDto employeeDto = mapper.map(employee, EmployeeDto.class);
 
 	//************ Microservices communication using RestTemplate   *************//
 //		ResponseEntity<DepartmentDto> responseEntity =  restTemplate.getForEntity("http://localhost:8080/api/departments/"+employee.getDepartmentCode(),
@@ -54,13 +58,18 @@ public class EmployeeServiceImp implements EmployeeService{
 		
 		
 		//************ Microservices communication using OpenFeign(Spring Cloud) *************//
+		// Making API call from Employee to Department microservice
 		DepartmentDto departmentDto= apiClient.getDepartment(employee.getDepartmentCode());
 		
-		EmployeeDto employeeDto = mapper.map(employee, EmployeeDto.class);
-		
+		//************ Microservices communication using OpenFeign(Spring Cloud) *************//
+				// Making API call from Employee to Organization microservice
+		OrganizationDto organizationDto = apiClientOrganization.getOrganization(employee.getDepartmentCode());
+				
+				
 		APIResponseDto responseDto = new APIResponseDto();
 		responseDto.setEmployee(employeeDto);
 		responseDto.setDepartment(departmentDto);
+		responseDto.setOrganization(organizationDto);
 		
 		
 		return responseDto;
